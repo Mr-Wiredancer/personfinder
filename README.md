@@ -1,3 +1,4 @@
+此项目正在等待被迁移至https://github.com/Mr-Wiredancer/pfifcn.git
 平台进展:
 =========
 平台分为两部分:
