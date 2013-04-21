@@ -1,6 +1,9 @@
+import os, sys
 import txmongo
+import pymongo.uri_parser
 import cyclone.web
-from twisted.internet import defer
+from twisted.python import log
+from twisted.internet import defer, reactor
 from twisted.application import service, internet
 from cyclone.httpclient import fetch
 
@@ -27,16 +30,29 @@ class PersonFinderDB(cyclone.web.Application):
             (r"/",       IndexHandler),
         ]
 
-        mongo = txmongo.lazyMongoConnectionPool()
+        mongo_uri = os.environ.get(
+            "MONGOLAB_URI", 
+            "mongodb://db_admin:personfinder@ds041347.mongolab.com/heroku_app15142536")
+        mongo_creds = pymongo.uri_parser.parse_uri(mongo_uri)
+
+        conn = txmongo.lazyMongoConnectionPool(
+            *mongo_creds['nodelist'][0], 
+            pool_size=5)
+
+        mongo = getattr(conn, mongo_creds['database'])
+        mongo.authenticate(
+                mongo_creds['username'], 
+                mongo_creds['password'])
+
         settings = {
-            "db": mongo.foo.test
+            "mongo": mongo,
+            "db": mongo.people
             #"static_path": "./static",
         }
 
         cyclone.web.Application.__init__(self, handlers, **settings)
 
-
-application = service.Application("PersonFinderDB")
+log.startLogging(sys.stdout)
 port = int(os.environ.get('PORT', 5000))
-srv = internet.TCPServer(port, PersonFinderDB(), interface="127.0.0.1")
-srv.setServiceParent(application)
+reactor.listenTCP(port, PersonFinderDB())
+reactor.run()

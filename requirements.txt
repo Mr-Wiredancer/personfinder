@@ -2,6 +2,7 @@ Twisted==13.0.0
 argparse==1.2.1
 cyclone==1.1
 pyOpenSSL==0.13
+pymongo==2.5
 txmongo==0.4
 wsgiref==0.1.2
 zope.interface==4.0.5
