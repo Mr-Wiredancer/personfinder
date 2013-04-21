@@ -4,10 +4,73 @@ html
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
     script(type='text/javascript', src='/js/LAB.min.js')
+    script(type='text/javascript', src='https://cdn.firebase.com/v0/firebase.js')
     script.
       //- Uses LAB.js to ensure script dependencies
       $LAB
       .script("/socket.io/socket.io.js").wait()
-      .script("/js/player.js")
+      .script("/js/player.js");
+    script(type='text/javascript', src='http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js')
+    script.
+      var sohu, db360;
+
+      $(document).ready(function(){
+
+        function build360Msg(data){
+          var newMsg = $($('.copyMsg').get(0)).clone();
+          newMsg.find('.source').text("来源：360");
+          newMsg.find('.name').text(data['name']);
+          newMsg.find('.note').text(data['message']);
+          newMsg.find('.sex').text("性别："+data['sex']);
+          newMsg.find('.contact').text("联系人："+data["contact_person"]);
+          newMsg.find('.contactnumber').text("电话见360平台");
+          $('#messages').prepend(newMsg);
+          return $(newMsg).slideDown('slow').removeClass('copyMsg');
+        }
+
+        function buildSohuMsg(data){
+          
+          console.log(data['id']);
+          var newMsg = $($('.copyMsg').get(0)).clone();
+          newMsg.find('.source').text("来源：搜狐");
+          newMsg.find('.name').text(data['name']);
+          newMsg.find('.note').text(data['message']);
+          newMsg.find('.age').text("年龄："+data['age']);
+          newMsg.find('.sex').text("性别："+(data['sex']==="male"?"男":"女"));
+          newMsg.find('.contactnumber').text("联系电话："+data['phone']);
+
+          $('#messages').prepend(newMsg);
+          return $(newMsg).slideDown('slow').removeClass('copyMsg');
+        }
+
+        sohu = new Firebase('https://wiredancer.firebaseio.com/sohu/search');
+        db360 = new Firebase('https://wiredancer.firebaseio.com/360/search');
+
+        sohu.once("value", function(snapshot){
+          var entries = snapshot.val();
+          var count = 0;
+          var keys = $.map(entries, function(element, index){return index});
+          keys = keys.slice(keys.length-6)
+
+          for (j = 0; j < 5; j++){
+            var data = entries[keys[j]];
+            var temp = buildSohuMsg(data);
+          };
+        });
+
+        sohu.limit(1).on("child_added", function(snapshot){
+            var data = snapshot.val();         
+            var id = parseInt(data['id']);
+            buildSohuMsg(data);
+        });
+
+        db360.limit(1).on("child_added", function(snapshot){
+          var data = snapshot.val();
+          build360Msg(data);
+        });
+
+      });
+       
+      
   body
     block content
