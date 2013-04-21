@@ -12,6 +12,9 @@ class IndexHandler(cyclone.web.RequestHandler):
     def get(self):
         name = self.get_argument("name")
         try:
+            yield self.settings.mongo.authenticate(
+                self.settings.username, 
+                self.settings.password)
             result = yield self.settings.db.find({"name":name})
         except Exception, e:
             self.write("find failed: %s\n" % str(e))
@@ -31,8 +34,7 @@ class PersonFinderDB(cyclone.web.Application):
         ]
 
         mongo_uri = os.environ.get(
-            "MONGOLAB_URI", 
-            "mongodb://db_admin:personfinder@ds041347.mongolab.com/heroku_app15142536")
+            "MONGOLAB_URI")
         mongo_creds = pymongo.uri_parser.parse_uri(mongo_uri)
 
         conn = txmongo.lazyMongoConnectionPool(
@@ -40,11 +42,10 @@ class PersonFinderDB(cyclone.web.Application):
             pool_size=5)
 
         mongo = getattr(conn, mongo_creds['database'])
-        mongo.authenticate(
-                mongo_creds['username'], 
-                mongo_creds['password'])
 
         settings = {
+            "username": mongo_creds['username'],
+            "password": mongo_creds['password'],
             "mongo": mongo,
             "db": mongo.people
             #"static_path": "./static",
