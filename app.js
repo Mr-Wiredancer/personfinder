@@ -23,9 +23,7 @@ fork = require("child_process").fork;
 
 app = express();
 
-server = http.createServer(app);
 
-io = require("socket.io").listen(server);
 
 app.set("port", process.env.PORT || 5000);
 
@@ -57,13 +55,14 @@ app.get("/users", user.list);
 
 app.get("/person_finder", function(req, res){
   var data = url.parse(req.url, true).query;
+  console.log(data);
   var source = data['source']
   var type = data['type']
   var c = new firebase("http://wiredancer.firebaseio.com/"+source+"/"+type+"/");
-  c.on("value", function(m){res.write(JSON.stringify(m.val()))});
+  c.on("value", function(m){res.write(JSON.stringify(m.val())); res.end();});
 })
 
-server.listen(app.get("port"), function() {
+app.listen(app.get("port"), function() {
   console.log("Express server listening on port " + app.get("port"));
   return 0;
 });

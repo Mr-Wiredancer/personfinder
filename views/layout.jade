@@ -14,6 +14,66 @@ html
     script.
 
       $(document).ready(function(){
+        function search(term){
+          var dataBaidu, data360, dataSohu;
+          
+          console.log(term);
+
+          baidu.once('value', function(snapshot){
+            dataBaidu = snapshot.val();
+
+            for (key in dataBaidu){
+              var msg = dataBaidu[key]['message'];
+              if (msg.indexOf(term)>=0){
+                buildBaiduMsg(dataBaidu[key]);
+              }
+            }
+          });
+
+          sohu.once('value', function(snapshot){
+            dataSohu = snapshot.val();
+
+            for (key in dataSohu){
+              var name = dataSohu[key]['name'];
+              if (name.indexOf(term)>=0){
+                buildSohuMsg(dataSohu[key]);
+              }
+            }
+          });
+
+          db360.once('value', function(snapshot){
+            data360 = snapshot.val();
+
+            for (key in data360){
+              var name = data360[key]['name'];
+              if (name.indexOf(term)>=0){
+                build360Msg(data360[key]);
+              }
+            }
+          });
+
+          try{
+          trackBaidu.off('child_added');
+          trackSohu.off('child_added');
+          track360.off('child_added');
+          }catch(e){
+          
+          }
+
+          console.log("should delete");
+          $('.message').remove();
+          
+          setTimeout(function(){
+            if ($('.message').length==0){
+              alert("对不起，没有找到您要找的人");
+            }
+          }, 5000);
+        }
+
+        $('.searchButton').click(function(){
+          var val = $('#searchterm').val();
+          search(val);
+        });
 
         function build360Msg(data){
           var newMsg = $($('.copyMsg').get(0)).clone();
@@ -22,6 +82,7 @@ html
           newMsg.find('.note').text(data['message']);
           newMsg.find('.sex').text("性别："+data['sex']);
           newMsg.find('.contact').text("联系人："+data["contact_person"]);
+          $(newMsg).addClass('message');
           newMsg.find('.contactnumber').text("电话见360平台");
           $('#messages').prepend(newMsg);
           return $(newMsg).slideDown('slow').removeClass('copyMsg');
@@ -34,6 +95,8 @@ html
           newMsg.find('.bdsource').text("来源：百度");
           newMsg.find('.link').text(link).attr('href', link);
           newMsg.find('.content').text(data['message']);
+          $(newMsg).addClass('message');
+
           $('#messages').prepend(newMsg);
           return $(newMsg).slideDown('slow').removeClass('copyBaiduMsg');
         }
@@ -48,6 +111,8 @@ html
           newMsg.find('.age').text("年龄："+data['age']);
           newMsg.find('.sex').text("性别："+(data['sex']==="male"?"男":"女"));
           newMsg.find('.contactnumber').text("联系电话："+data['phone']);
+          $(newMsg).addClass('message');
+
 
           $('#messages').prepend(newMsg);
           return $(newMsg).slideDown('slow').removeClass('copyMsg');
@@ -56,6 +121,10 @@ html
         var baidu = new Firebase('https://wiredancer.firebaseio.com/baidu/search');
         var sohu = new Firebase('https://wiredancer.firebaseio.com/sohu/search');
         var db360 = new Firebase('https://wiredancer.firebaseio.com/360/search');
+
+        var trackBaidu;
+        var trackSohu;
+        var track360;
 
         sohu.once("value", function(snapshot){
           var entries = snapshot.val();
@@ -69,18 +138,21 @@ html
           };
         });
 
-        sohu.limit(1).on("child_added", function(snapshot){
+        trackSohu = sohu.limit(1);
+        trackSohu.on("child_added", function(snapshot){
             var data = snapshot.val();         
             var id = parseInt(data['id']);
             buildSohuMsg(data);
         });
 
-        baidu.limit(1).on("child_added", function(snapshot){
+        trackBaidu = baidu.limit(1);
+        trackBaidu.on("child_added", function(snapshot){
           var data = snapshot.val();
           buildBaiduMsg(data);
         });
 
-        db360.limit(1).on("child_added", function(snapshot){
+        track360 = db360.limit(1);
+        track360.on("child_added", function(snapshot){
           var data = snapshot.val();
           build360Msg(data);
         });
