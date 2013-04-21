@@ -5,11 +5,6 @@ html
     link(rel='stylesheet', href='/stylesheets/style.css')
     script(type='text/javascript', src='/js/LAB.min.js')
     script(type='text/javascript', src='https://cdn.firebase.com/v0/firebase.js')
-    script.
-      //- Uses LAB.js to ensure script dependencies
-      $LAB
-      .script("/socket.io/socket.io.js").wait()
-      .script("/js/player.js");
     script(type='text/javascript', src='http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js')
     script.
 
@@ -25,6 +20,8 @@ html
             for (key in dataBaidu){
               var msg = dataBaidu[key]['message'];
               if (msg.indexOf(term)>=0){
+                console.log("a match");
+                console.log(msg);
                 buildBaiduMsg(dataBaidu[key]);
               }
             }
@@ -60,7 +57,6 @@ html
           
           }
 
-          console.log("should delete");
           $('.message').remove();
           
           setTimeout(function(){
@@ -89,12 +85,15 @@ html
         }
 
         function buildBaiduMsg(data){
+          console.log("here in baidu msg");
+          console.log(data);
           var newMsg = $($('.copyBaiduMsg').get(0)).clone();
           
           var link = "http://tieba.baidu.com/p/2280490557?pn="+data['page'];
           newMsg.find('.bdsource').text("来源：百度");
           newMsg.find('.link').text(link).attr('href', link);
           newMsg.find('.content').text(data['message']);
+          console.log(newMsg);
           $(newMsg).addClass('message');
 
           $('#messages').prepend(newMsg);
