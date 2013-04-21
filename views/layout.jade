@@ -12,7 +12,6 @@ html
       .script("/js/player.js");
     script(type='text/javascript', src='http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js')
     script.
-      var sohu, db360;
 
       $(document).ready(function(){
 
@@ -26,6 +25,17 @@ html
           newMsg.find('.contactnumber').text("电话见360平台");
           $('#messages').prepend(newMsg);
           return $(newMsg).slideDown('slow').removeClass('copyMsg');
+        }
+
+        function buildBaiduMsg(data){
+          var newMsg = $($('.copyBaiduMsg').get(0)).clone();
+          
+          var link = "http://tieba.baidu.com/p/2280490557?pn="+data['page'];
+          newMsg.find('.bdsource').text("来源：百度");
+          newMsg.find('.link').text(link).attr('href', link);
+          newMsg.find('.content').text(data['message']);
+          $('#messages').prepend(newMsg);
+          return $(newMsg).slideDown('slow').removeClass('copyBaiduMsg');
         }
 
         function buildSohuMsg(data){
@@ -43,8 +53,9 @@ html
           return $(newMsg).slideDown('slow').removeClass('copyMsg');
         }
 
-        sohu = new Firebase('https://wiredancer.firebaseio.com/sohu/search');
-        db360 = new Firebase('https://wiredancer.firebaseio.com/360/search');
+        var baidu = new Firebase('https://wiredancer.firebaseio.com/baidu/search');
+        var sohu = new Firebase('https://wiredancer.firebaseio.com/sohu/search');
+        var db360 = new Firebase('https://wiredancer.firebaseio.com/360/search');
 
         sohu.once("value", function(snapshot){
           var entries = snapshot.val();
@@ -62,6 +73,11 @@ html
             var data = snapshot.val();         
             var id = parseInt(data['id']);
             buildSohuMsg(data);
+        });
+
+        baidu.limit(1).on("child_added", function(snapshot){
+          var data = snapshot.val();
+          buildBaiduMsg(data);
         });
 
         db360.limit(1).on("child_added", function(snapshot){
